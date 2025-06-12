@@ -7,6 +7,9 @@ class TsubakiDatabase {
         this.pageSize = 20;
         this.currentSection = 'home';
         this.currentTheme = 'dark';
+        this.user = null;
+        this.searchHistory = [];
+        this.bookmarks = [];
         this.categories = {
             "Drive Chain": 98,
             "Sprocket": 11953,
@@ -24,6 +27,8 @@ class TsubakiDatabase {
     async init() {
         this.setupEventListeners();
         this.setupTheme();
+        this.loadUserFromStorage();
+        this.updateUserUI();
         this.renderCategories();
         
         // Load products with timeout
@@ -39,6 +44,11 @@ class TsubakiDatabase {
         
         this.setupFilters();
         this.showLoading(false);
+        this.renderSearchHistory();
+        this.renderBookmarks();
+        if (this.currentSection === 'products') {
+            this.renderProducts();
+        }
     }
     
     async loadProducts() {
@@ -209,6 +219,46 @@ class TsubakiDatabase {
         if (exportBtn) {
             exportBtn.addEventListener('click', () => this.exportData());
         }
+
+        // Auth buttons
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => this.showLoginModal());
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.logout());
+        }
+
+        const loginModalClose = document.getElementById('loginModalClose');
+        if (loginModalClose) {
+            loginModalClose.addEventListener('click', () => this.closeLoginModal());
+        }
+
+        const loginModalBackdrop = document.getElementById('loginModalBackdrop');
+        if (loginModalBackdrop) {
+            loginModalBackdrop.addEventListener('click', () => this.closeLoginModal());
+        }
+
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        if (adminLoginBtn) {
+            adminLoginBtn.addEventListener('click', () => {
+                const id = document.getElementById('adminId').value;
+                const pw = document.getElementById('adminPw').value;
+                this.loginAdmin(id, pw);
+            });
+        }
+
+        const googleLogin = document.getElementById('googleLogin');
+        if (googleLogin) {
+            googleLogin.addEventListener('click', () => this.mockGoogleLogin());
+        }
+
+        const kakaoLogin = document.getElementById('kakaoLogin');
+        if (kakaoLogin) {
+            kakaoLogin.addEventListener('click', () => this.mockKakaoLogin());
+        }
     }
     
     setupTheme() {
@@ -228,6 +278,100 @@ class TsubakiDatabase {
         if (btn) {
             btn.textContent = this.currentTheme === 'dark' ? '☀️ 라이트모드' : '🌙 다크모드';
         }
+    }
+
+    showLoginModal() {
+        const modal = document.getElementById('loginModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    closeLoginModal() {
+        const modal = document.getElementById('loginModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    mockGoogleLogin() {
+        this.user = { name: 'GoogleUser', provider: 'google', isAdmin: false };
+        this.afterLogin();
+    }
+
+    mockKakaoLogin() {
+        this.user = { name: 'KakaoUser', provider: 'kakao', isAdmin: false };
+        this.afterLogin();
+    }
+
+    loginAdmin(id, pw) {
+        if (id === 'admin' && pw === 'admin') {
+            this.user = { name: 'admin', provider: 'admin', isAdmin: true };
+            this.afterLogin();
+        } else {
+            alert('잘못된 관리자 정보입니다.');
+        }
+    }
+
+    afterLogin() {
+        this.closeLoginModal();
+        this.loadUserData();
+        this.updateUserUI();
+        this.renderSearchHistory();
+        this.renderBookmarks();
+        if (this.currentSection === 'products') {
+            this.renderProducts();
+        }
+    }
+
+    logout() {
+        this.user = null;
+        localStorage.removeItem('currentUser');
+        this.updateUserUI();
+        this.searchHistory = [];
+        this.bookmarks = [];
+        this.renderSearchHistory();
+        this.renderBookmarks();
+    }
+
+    updateUserUI() {
+        const info = document.getElementById('userInfo');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        if (!info || !loginBtn || !logoutBtn) return;
+
+        if (this.user) {
+            info.textContent = `${this.user.name} 님`;
+            loginBtn.classList.add('hidden');
+            logoutBtn.classList.remove('hidden');
+        } else {
+            info.textContent = '';
+            loginBtn.classList.remove('hidden');
+            logoutBtn.classList.add('hidden');
+        }
+    }
+
+    loadUserFromStorage() {
+        const stored = localStorage.getItem('currentUser');
+        if (stored) {
+            this.user = JSON.parse(stored);
+            this.loadUserData();
+        }
+    }
+
+    loadUserData() {
+        if (!this.user) return;
+        const hist = localStorage.getItem(`history_${this.user.name}`);
+        const bm = localStorage.getItem(`bookmarks_${this.user.name}`);
+        this.searchHistory = hist ? JSON.parse(hist) : [];
+        this.bookmarks = bm ? JSON.parse(bm) : [];
+        localStorage.setItem('currentUser', JSON.stringify(this.user));
+    }
+
+    saveUserData() {
+        if (!this.user) return;
+        localStorage.setItem(`history_${this.user.name}`,
+            JSON.stringify(this.searchHistory));
+        localStorage.setItem(`bookmarks_${this.user.name}`,
+            JSON.stringify(this.bookmarks));
+        localStorage.setItem('currentUser', JSON.stringify(this.user));
     }
     
     navigateToSection(section) {
@@ -373,20 +517,23 @@ class TsubakiDatabase {
         }
     }
     
-    performSearch() {
+    performSearch(query) {
         const mainSearch = document.getElementById('mainSearch');
         if (!mainSearch) return;
-        
-        const query = mainSearch.value.trim().toLowerCase();
-        if (!query) return;
-        
-        this.filteredProducts = this.products.filter(product => 
-            product.name.toLowerCase().includes(query) ||
-            product.model.toLowerCase().includes(query) ||
-            product.tsubaki_code.toLowerCase().includes(query) ||
-            product.category.toLowerCase().includes(query)
+
+        const q = (query ?? mainSearch.value).trim().toLowerCase();
+        if (!q) return;
+
+        mainSearch.value = q;
+        this.addSearchHistory(q);
+
+        this.filteredProducts = this.products.filter(product =>
+            product.name.toLowerCase().includes(q) ||
+            product.model.toLowerCase().includes(q) ||
+            product.tsubaki_code.toLowerCase().includes(q) ||
+            product.category.toLowerCase().includes(q)
         );
-        
+
         this.currentPage = 1;
         this.navigateToSection('products');
     }
@@ -458,7 +605,17 @@ class TsubakiDatabase {
             const card = document.createElement('div');
             card.className = 'product-card';
             card.innerHTML = this.createProductCardHTML(product);
-            
+            const bookmarkBtn = card.querySelector('.bookmark-btn');
+            if (bookmarkBtn) {
+                bookmarkBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleBookmark(product);
+                });
+                if (this.bookmarks.find(b => b.id === product.id)) {
+                    bookmarkBtn.classList.add('active');
+                }
+            }
+
             card.addEventListener('click', () => this.showProductDetails(product));
             grid.appendChild(card);
         });
@@ -468,6 +625,7 @@ class TsubakiDatabase {
     
     createProductCardHTML(product) {
         return `
+            <button class="bookmark-btn">★</button>
             <div class="product-card__header">
                 <h4 class="product-card__title">${product.name}</h4>
                 <div class="product-card__code">${product.tsubaki_code}</div>
@@ -713,8 +871,79 @@ class TsubakiDatabase {
             ];
             csvRows.push(row.join(','));
         });
-        
+
         return csvRows.join('\n');
+    }
+
+    addSearchHistory(query) {
+        if (!this.user) return;
+        this.searchHistory.unshift(query);
+        if (this.searchHistory.length > 20) this.searchHistory.pop();
+        this.saveUserData();
+        this.renderSearchHistory();
+    }
+
+    renderSearchHistory() {
+        const section = document.getElementById('historySection');
+        const list = document.getElementById('searchHistory');
+        if (!section || !list) return;
+
+        if (!this.user || this.searchHistory.length === 0) {
+            section.classList.add('hidden');
+            list.innerHTML = '';
+            return;
+        }
+
+        section.classList.remove('hidden');
+        list.innerHTML = '';
+        this.searchHistory.forEach(q => {
+            const li = document.createElement('li');
+            const btn = document.createElement('button');
+            btn.className = 'history-item';
+            btn.textContent = q;
+            btn.addEventListener('click', () => this.performSearch(q));
+            li.appendChild(btn);
+            list.appendChild(li);
+        });
+    }
+
+    toggleBookmark(product) {
+        if (!this.user) return;
+        const idx = this.bookmarks.findIndex(b => b.id === product.id);
+        if (idx >= 0) {
+            this.bookmarks.splice(idx, 1);
+        } else {
+            this.bookmarks.push({ id: product.id, name: product.name });
+        }
+        this.saveUserData();
+        this.renderBookmarks();
+        this.renderProducts();
+    }
+
+    renderBookmarks() {
+        const section = document.getElementById('historySection');
+        const list = document.getElementById('bookmarkList');
+        if (!section || !list) return;
+
+        if (!this.user || this.bookmarks.length === 0 && this.searchHistory.length === 0) {
+            section.classList.add('hidden');
+        } else {
+            section.classList.remove('hidden');
+        }
+
+        list.innerHTML = '';
+        this.bookmarks.forEach(b => {
+            const li = document.createElement('li');
+            const btn = document.createElement('button');
+            btn.className = 'bookmark-item';
+            btn.textContent = b.name;
+            btn.addEventListener('click', () => {
+                const product = this.products.find(p => p.id === b.id);
+                if (product) this.showProductDetails(product);
+            });
+            li.appendChild(btn);
+            list.appendChild(li);
+        });
     }
     
     showLoading(show) {
@@ -794,6 +1023,9 @@ function calculateChainSpeed() {
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.tsubakiApp = new TsubakiDatabase();
+    if (window.Kakao && !Kakao.isInitialized()) {
+        Kakao.init('YOUR_KAKAO_API_KEY');
+    }
 });
 
 // Keyboard shortcuts

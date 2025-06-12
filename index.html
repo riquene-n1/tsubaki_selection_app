@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tsubaki Chain 제품 데이터베이스</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://developers.kakao.com/sdk/js/kakao.js" defer></script>
 </head>
 <body>
     <header class="header">
@@ -15,6 +17,9 @@
                     <span class="header__tagline">Innovation in Motion</span>
                 </div>
                 <div class="header__controls">
+                    <span id="userInfo" class="user-info"></span>
+                    <button class="btn btn--primary" id="loginBtn">로그인</button>
+                    <button class="btn btn--outline hidden" id="logoutBtn">로그아웃</button>
                     <button class="btn btn--outline" id="themeToggle">🌙 다크모드</button>
                 </div>
             </div>
@@ -116,6 +121,13 @@
                 <div class="pagination" id="pagination">
                     <!-- 페이지네이션이 여기에 생성됩니다 -->
                 </div>
+
+                <div class="user-history hidden" id="historySection">
+                    <h4>검색 기록</h4>
+                    <ul id="searchHistory"></ul>
+                    <h4>북마크</h4>
+                    <ul id="bookmarkList"></ul>
+                </div>
             </div>
         </section>
 
@@ -129,6 +141,26 @@
                 </div>
                 <div class="modal__body" id="modalBody">
                     <!-- 제품 상세정보가 여기에 동적으로 생성됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그인 모달 -->
+        <div class="modal hidden" id="loginModal">
+            <div class="modal__backdrop" id="loginModalBackdrop"></div>
+            <div class="modal__content">
+                <div class="modal__header">
+                    <h3 class="modal__title">로그인</h3>
+                    <button class="modal__close" id="loginModalClose">×</button>
+                </div>
+                <div class="modal__body">
+                    <button class="btn btn--primary" id="googleLogin">Google 로그인</button>
+                    <button class="btn btn--primary" id="kakaoLogin">Kakao 로그인</button>
+                    <div class="admin-login">
+                        <input type="text" class="form-control" id="adminId" placeholder="관리자 ID">
+                        <input type="password" class="form-control" id="adminPw" placeholder="비밀번호">
+                        <button class="btn btn--secondary" id="adminLoginBtn">관리자 로그인</button>
+                    </div>
                 </div>
             </div>
         </div>

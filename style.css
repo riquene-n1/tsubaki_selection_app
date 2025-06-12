@@ -883,6 +883,7 @@ select.form-control {
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-card-border);
   overflow: hidden;
+  position: relative;
   cursor: pointer;
   transition: all var(--duration-normal) var(--ease-standard);
 }
@@ -1435,4 +1436,49 @@ select.form-control {
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+}
+
+/* User history */
+.user-history {
+  margin-top: var(--space-20);
+}
+
+.user-history ul {
+  list-style: disc;
+  padding-left: var(--space-20);
+  margin-bottom: var(--space-16);
+}
+
+/* Admin login form */
+.admin-login {
+  margin-top: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.bookmark-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-8);
+}
+
+.bookmark-btn.active {
+  color: var(--color-tsubaki-red);
+}
+
+/* History lists */
+.user-history button {
+  background: none;
+  border: none;
+  color: var(--color-tsubaki-red);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-size: inherit;
 }

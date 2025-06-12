@@ -154,13 +154,29 @@
                     <button class="modal__close" id="loginModalClose">×</button>
                 </div>
                 <div class="modal__body">
+                    <div class="auth-login">
+                        <input type="email" class="form-control" id="loginEmail" placeholder="이메일">
+                        <input type="password" class="form-control" id="loginPw" placeholder="비밀번호">
+                        <button class="btn btn--primary" id="emailLoginBtn">로그인</button>
+                    </div>
                     <button class="btn btn--primary" id="googleLogin">Google 로그인</button>
                     <button class="btn btn--primary" id="kakaoLogin">Kakao 로그인</button>
+                    <div class="auth-signup hidden" id="signupForm">
+                        <input type="email" class="form-control" id="signupEmail" placeholder="이메일">
+                        <input type="password" class="form-control" id="signupPw" placeholder="비밀번호">
+                        <input type="text" class="form-control" id="signupGender" placeholder="성별">
+                        <input type="number" class="form-control" id="signupAge" placeholder="나이">
+                        <input type="text" class="form-control" id="signupPhone" placeholder="전화번호">
+                        <input type="text" class="form-control" id="signupCompany" placeholder="회사">
+                        <input type="text" class="form-control" id="signupPosition" placeholder="직책">
+                        <button class="btn btn--secondary" id="signupSubmit">회원가입</button>
+                    </div>
                     <div class="admin-login">
                         <input type="text" class="form-control" id="adminId" placeholder="관리자 ID">
                         <input type="password" class="form-control" id="adminPw" placeholder="비밀번호">
                         <button class="btn btn--secondary" id="adminLoginBtn">관리자 로그인</button>
                     </div>
+                    <button class="btn btn--outline" id="toggleSignup">회원가입</button>
                 </div>
             </div>
         </div>

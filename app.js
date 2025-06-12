@@ -250,6 +250,39 @@ class TsubakiDatabase {
             });
         }
 
+        const emailLoginBtn = document.getElementById('emailLoginBtn');
+        if (emailLoginBtn) {
+            emailLoginBtn.addEventListener('click', () => {
+                const email = document.getElementById('loginEmail').value;
+                const pw = document.getElementById('loginPw').value;
+                this.loginEmail(email, pw);
+            });
+        }
+
+        const signupBtn = document.getElementById('signupSubmit');
+        if (signupBtn) {
+            signupBtn.addEventListener('click', () => {
+                const data = {
+                    email: document.getElementById('signupEmail').value,
+                    password: document.getElementById('signupPw').value,
+                    gender: document.getElementById('signupGender').value,
+                    age: parseInt(document.getElementById('signupAge').value || '0', 10),
+                    phone: document.getElementById('signupPhone').value,
+                    company: document.getElementById('signupCompany').value,
+                    position: document.getElementById('signupPosition').value,
+                };
+                this.signupUser(data);
+            });
+        }
+
+        const toggleSignup = document.getElementById('toggleSignup');
+        if (toggleSignup) {
+            toggleSignup.addEventListener('click', () => {
+                const form = document.getElementById('signupForm');
+                if (form) form.classList.toggle('hidden');
+            });
+        }
+
         const googleLogin = document.getElementById('googleLogin');
         if (googleLogin) {
             googleLogin.addEventListener('click', () => this.mockGoogleLogin());
@@ -298,6 +331,36 @@ class TsubakiDatabase {
     mockKakaoLogin() {
         this.user = { name: 'KakaoUser', provider: 'kakao', isAdmin: false };
         this.afterLogin();
+    }
+
+    async loginEmail(email, password) {
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (!res.ok) throw new Error('login failed');
+            const data = await res.json();
+            this.user = { name: data.name, provider: 'local', isAdmin: false };
+            this.afterLogin();
+        } catch (err) {
+            alert('로그인 실패');
+        }
+    }
+
+    async signupUser(info) {
+        try {
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(info)
+            });
+            if (!res.ok) throw new Error('signup failed');
+            alert('회원가입 완료');
+        } catch (err) {
+            alert('회원가입 실패');
+        }
     }
 
     loginAdmin(id, pw) {
